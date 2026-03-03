@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pong (Mouse vs Bot)</title>
+  <style>
+    body {
+      margin: 0;
+      background: #0b0b0f;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+
+    canvas {
+      border: 2px solid rgba(255,255,255,0.2);
+      background: black;
+      border-radius: 12px;
+    }
+
+    .hint {
+      position: absolute;
+      top: 20px;
+      font-size: 14px;
+      opacity: 0.7;
+      text-align: center;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="hint">
+    Move your mouse up/down to control the left paddle. <br />
+    Press <b>Space</b> to serve.
+  </div>
+
+  <canvas id="game" width="900" height="500"></canvas>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const WIDTH = canvas.width;
+    const HEIGHT = canvas.height;
+
+    // ==============================
+    // GAME SETTINGS
+    // ==============================
+    const PADDLE_WIDTH = 14;
+    const PADDLE_HEIGHT = 90;
+
+    const BALL_SIZE = 12;
+
+    const PLAYER_X = 30;
+    const BOT_X = WIDTH - 30 - PADDLE_WIDTH;
+
+    const BALL_SPEED_START = 2;
+    const BALL_SPEED_MAX = 8;
+
+    const SCORE_TO_WIN = 7;
+
+    // ==============================
+    // GAME STATE
+    // ==============================
+    let player = {
+      x: PLAYER_X,
+      y: HEIGHT / 2 - PADDLE_HEIGHT / 2,
+      score: 0,
+    };
+
+    let bot = {
+      x: BOT_X,
+      y: HEIGHT / 2 - PADDLE_HEIGHT / 2,
+      score: 0,
+      targetY: HEIGHT / 2,
+      reactionTimer: 0,
+    };
+
+    let ball = {
+      x: WIDTH / 2,
+      y: HEIGHT / 2,
+      vx: 0,
+      vy: 0,
+      speed: BALL_SPEED_START,
+      active: false,
+    };
+
+    let winner = null;
+
+    // ==============================
+    // INPUT (MOUSE)
+    // ==============================
+    canvas.addEventListener("mousemove", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseY = e.clientY - rect.top;
+
+      player.y = mouseY - PADDLE_HEIGHT / 2;
+
+      // clamp
+      if (player.y < 0) player.y = 0;
+      if (player.y > HEIGHT - PADDLE_HEIGHT) player.y = HEIGHT - PADDLE_HEIGHT;
+    });
+
+    // Serve
+    window.addEventListener("keydown", (e) => {
+      if (e.code === "Space") {
+        if (!ball.active && winner === null) {
+          serveBall();
+        }
+        if (winner !== null) {
+          resetGame();
+        }
+      }
+    });
+
+    // ==============================
+    // HELPERS
+    // ==============================
+    function clamp(val, min, max) {
+      return Math.max(min, Math.min(max, val));
+    }
+
+    function serveBall() {
+      ball.active = true;
+      ball.speed = BALL_SPEED_START;
+
+      ball.x = WIDTH / 2;
+      ball.y = HEIGHT / 2;
+
+      // random direction
+      let angle = (Math.random() * 0.8 - 0.4); // -0.4 to 0.4 radians
+      let dir = Math.random() < 0.5 ? -1 : 1;
+
+      ball.vx = Math.cos(angle) * ball.speed * dir;
+      ball.vy = Math.sin(angle) * ball.speed;
+    }
+
+    function resetBall(scoredOnLeft) {
+      ball.active = false;
+      ball.vx = 0;
+      ball.vy = 0;
+      ball.speed = BALL_SPEED_START;
+
+      ball.x = WIDTH / 2;
+      ball.y = HEIGHT / 2;
+
+      // Bot resets its "thinking"
+      bot.reactionTimer = 0;
+      bot.targetY = HEIGHT / 2;
+    }
+
+    function resetGame() {
+      player.score = 0;
+      bot.score = 0;
+      winner = null;
+      resetBall();
+    }
+
+    // ==============================
+    // BOT AI (GOOD BUT BEATABLE)
+    // ==============================
+    function botAI() {
+      // Difficulty tuning knobs (EASIER BOT)
+      const BOT_MAX_SPEED = 2;      // slower paddle
+      const REACTION_FRAMES = 45;     // slower reaction time
+      const ERROR_AMOUNT = 65;        // much worse prediction
+      const EDGE_BIAS = 0.45;         // more likely to aim wrong
+      // only "track" ball when it's moving toward the bot
+      if (ball.vx > 0 && ball.active) {
+        bot.reactionTimer++;
+
+        // bot updates its prediction only every REACTION_FRAMES frames
+        if (bot.reactionTimer >= REACTION_FRAMES) {
+          bot.reactionTimer = 0;
+
+          // Predict where the ball will cross the bot paddle X
+          let predictedY = predictBallYAtX(bot.x);
+
+          // Add some human-like error
+          predictedY += (Math.random() * 2 - 1) * ERROR_AMOUNT;
+
+          // Sometimes aim slightly off-center (makes it beatable)
+          if (Math.random() < EDGE_BIAS) {
+            predictedY += (Math.random() < 0.5 ? -1 : 1) * 60;
+          }
+
+          bot.targetY = predictedY;
+        }
+      } else {
+        // If ball is going away, drift back toward center (lazy AI)
+        bot.targetY = HEIGHT / 2;
+      }
+
+      // Move bot toward target with max speed
+      const botCenter = bot.y + PADDLE_HEIGHT / 2;
+      const diff = bot.targetY - botCenter;
+
+      let move = clamp(diff * 0.08, -BOT_MAX_SPEED, BOT_MAX_SPEED);
+      bot.y += move;
+
+      // clamp
+      bot.y = clamp(bot.y, 0, HEIGHT - PADDLE_HEIGHT);
+    }
+
+    // Predict Y position of ball when it reaches a certain X
+    function predictBallYAtX(targetX) {
+      // copy ball state
+      let simX = ball.x;
+      let simY = ball.y;
+      let simVx = ball.vx;
+      let simVy = ball.vy;
+
+      // simulate forward
+      for (let i = 0; i < 2000; i++) {
+        simX += simVx;
+        simY += simVy;
+
+        // bounce off top/bottom
+        if (simY <= 0) {
+          simY = 0;
+          simVy *= -1;
+        }
+        if (simY >= HEIGHT - BALL_SIZE) {
+          simY = HEIGHT - BALL_SIZE;
+          simVy *= -1;
+        }
+
+        // stop sim when reaches bot side
+        if (simX >= targetX) {
+          return simY + BALL_SIZE / 2;
+        }
+      }
+
+      return HEIGHT / 2;
+    }
+
+    // ==============================
+    // COLLISIONS
+    // ==============================
+    function paddleCollision(paddle) {
+      return (
+        ball.x < paddle.x + PADDLE_WIDTH &&
+        ball.x + BALL_SIZE > paddle.x &&
+        ball.y < paddle.y + PADDLE_HEIGHT &&
+        ball.y + BALL_SIZE > paddle.y
+      );
+    }
+
+    function bounceOffPaddle(paddle, isPlayer) {
+      // Find hit position relative to paddle center
+      const paddleCenter = paddle.y + PADDLE_HEIGHT / 2;
+      const ballCenter = ball.y + BALL_SIZE / 2;
+
+      const offset = ballCenter - paddleCenter;
+      const normalized = offset / (PADDLE_HEIGHT / 2);
+
+      // Angle controls (more extreme hit = sharper bounce)
+      const maxAngle = Math.PI / 3; // 60 degrees
+      const bounceAngle = normalized * maxAngle;
+
+      // speed up ball gradually
+      ball.speed = Math.min(ball.speed + 0.4, BALL_SPEED_MAX);
+
+      const direction = isPlayer ? 1 : -1;
+
+      ball.vx = Math.cos(bounceAngle) * ball.speed * direction;
+      ball.vy = Math.sin(bounceAngle) * ball.speed;
+
+      // tiny random wobble so rallies aren't identical
+      ball.vy += (Math.random() * 0.4 - 0.2);
+    }
+
+    // ==============================
+    // UPDATE LOOP
+    // ==============================
+    function update() {
+      if (winner !== null) return;
+
+      botAI();
+
+      if (ball.active) {
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+
+        // wall bounce
+        if (ball.y <= 0) {
+          ball.y = 0;
+          ball.vy *= -1;
+        }
+
+        if (ball.y >= HEIGHT - BALL_SIZE) {
+          ball.y = HEIGHT - BALL_SIZE;
+          ball.vy *= -1;
+        }
+
+        // paddle collisions
+        if (paddleCollision(player) && ball.vx < 0) {
+          ball.x = player.x + PADDLE_WIDTH;
+          bounceOffPaddle(player, true);
+        }
+
+        if (paddleCollision(bot) && ball.vx > 0) {
+          ball.x = bot.x - BALL_SIZE;
+          bounceOffPaddle(bot, false);
+        }
+
+        // scoring
+        if (ball.x < -BALL_SIZE) {
+          bot.score++;
+          resetBall(true);
+        }
+
+        if (ball.x > WIDTH + BALL_SIZE) {
+          player.score++;
+          resetBall(false);
+        }
+
+        // win condition
+        if (player.score >= SCORE_TO_WIN) {
+          winner = "YOU WIN 🎉";
+        }
+
+        if (bot.score >= SCORE_TO_WIN) {
+          winner = "BOT WINS 🤖";
+        }
+      }
+    }
+
+    // ==============================
+    // DRAW
+    // ==============================
+    function drawNet() {
+      ctx.fillStyle = "rgba(255,255,255,0.2)";
+      for (let y = 0; y < HEIGHT; y += 30) {
+        ctx.fillRect(WIDTH / 2 - 2, y, 4, 18);
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+      // background
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+      drawNet();
+
+      // paddles
+      ctx.fillStyle = "white";
+      ctx.fillRect(player.x, player.y, PADDLE_WIDTH, PADDLE_HEIGHT);
+      ctx.fillRect(bot.x, bot.y, PADDLE_WIDTH, PADDLE_HEIGHT);
+
+      // ball
+      ctx.fillRect(ball.x, ball.y, BALL_SIZE, BALL_SIZE);
+
+      // score
+      ctx.font = "40px Arial";
+      ctx.fillText(player.score, WIDTH / 2 - 80, 60);
+      ctx.fillText(bot.score, WIDTH / 2 + 50, 60);
+
+      // serve text
+      if (!ball.active && winner === null) {
+        ctx.font = "22px Arial";
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        ctx.fillText("Press SPACE to serve", WIDTH / 2 - 110, HEIGHT / 2);
+      }
+
+      // winner message
+      if (winner !== null) {
+        ctx.font = "48px Arial";
+        ctx.fillStyle = "white";
+        ctx.fillText(winner, WIDTH / 2 - 150, HEIGHT / 2);
+
+        ctx.font = "20px Arial";
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        ctx.fillText("Press SPACE to restart", WIDTH / 2 - 110, HEIGHT / 2 + 50);
+      }
+    }
+
+    // ==============================
+    // MAIN LOOP
+    // ==============================
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    loop();
+  </script>
+</body>
+</html>

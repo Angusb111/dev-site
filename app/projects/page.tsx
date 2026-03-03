@@ -15,6 +15,7 @@ export default function Projects() {
           <h1 className="max-w-s text-7xl font-semibold leading-15 tracking-tight text-black dark:text-zinc-50">
             AT Some Point, there will be a list of projects here
           </h1>
+          <a href="./pong.html" className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">Play Pong</a>
         </div>
       </main>
     </div>
