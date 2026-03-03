@@ -12,7 +12,7 @@ export default function Home() {
           priority
         />
         <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xl text-7xl font-semibold leading-snug tracking-tight text-black dark:text-zinc-50">
+          <h1 className="max-w-xl text-7xl font-semibold leading-15 tracking-tight text-black dark:text-zinc-50">
             Angus Bodle
           </h1>
           <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
@@ -42,6 +42,9 @@ export default function Home() {
             My Projects
           </a>
         </div>
+        <a href="https://www.instagram.com/angusb.2737/" className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
+          Instagram
+        </a>
       </main>
     </div>
   );
