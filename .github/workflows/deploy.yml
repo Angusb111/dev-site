@@ -23,6 +23,5 @@ jobs:
           script: |
             cd /srv/sites/dev-site
             git reset --hard
-            git clean -fd
             git pull origin main
             docker compose up -d --build
