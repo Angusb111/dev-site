@@ -34,11 +34,10 @@ export default function Home() {
             rel="noopener noreferrer"
           >
             <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+              src="/cog.svg"
+              alt="wrench icon"
+              width={20}
+              height={20}
             />
             My Projects
           </a>
