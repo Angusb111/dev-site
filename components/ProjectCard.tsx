@@ -21,7 +21,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   link,
 }) => {
   return (
-    <div className="flex flex-col gap-0 pb-3 bg-[#111] shadow-none border border-teal-300 rounded-sm hover:shadow-[0px_0px_10px_#46edd5] transition-shadow max-w-xs text-white text-sm">
+    <div className="flex flex-col gap-0 pb-3 bg-[#111] shadow-none border border-teal-300 rounded-sm hover:shadow-[0px_0px_10px_#46edd5] transition-shadow max-w-xs text-white text-sm text-left">
       <div className="flex flex-row gap-0 p-4 justify-between items-center">
         <p className="text-white text-xl font-semibold">{title}</p>
         {status && (
@@ -34,9 +34,9 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         )}
       </div>
       <img src={imageSrc} className="p-4 pt-0" alt={title} />
-      <p className="px-3">{description}</p>
-      <p className="ps-3 pt-2">Technology Used:</p>
-      <ul className="list-disc ps-8">
+      <p className="mx-4">{description}</p>
+      <p className="pt-2 mx-4">Technology Used:</p>
+      <ul className="list-disc mx-9">
         {technologies.map((tech, index) => (
             <li key={index}>{tech}</li>
         ))}

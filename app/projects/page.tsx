@@ -28,7 +28,7 @@ const projects: Project[] = [
     imageSrc: '/devsitesc.webp',
     status: 'Live',
     archive: 'FALSE',
-    link: 'https://angusbodle.com',
+    link: 'https://angusbodle.nz',
   },
   {
     title: 'Photograpy Portfolio',
@@ -37,7 +37,7 @@ const projects: Project[] = [
     imageSrc: '/photositesc.webp',
     status: 'Live',
     archive: 'FALSE',
-    link: 'https://photo.angusbodle.com',
+    link: 'https://photo.angusbodle.nz',
   },
   // Add more projects as needed
 ];
@@ -45,9 +45,10 @@ const projects: Project[] = [
 export default function Projects() {
   return (
     <div className="flex min-h-screen items-center justify-center font-sans bg-black">
-      <main className="flex min-h-screen w-full max-w-6xl flex-col items-center justify-between py-32 px-16 bg-black sm:items-start">
-        <div className="flex flex-row gap-5 items-center justify-between">
+      <main className="flex min-h-screen w-full max-w-6xl flex-col items-center justify-between md:py-32 md:px-16 bg-black sm:items-start">
+        <div className="flex flex-row w-full gap-2 md:gap-5 items-center justify-items-start md:justify-between">
           <Image
+            className="w-24"
             src="/logo.png"
             alt="My Logo"
             width={100}
@@ -59,9 +60,9 @@ export default function Projects() {
           </h1>
         </div>
 
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
+        <div className="flex flex-col items-center md:gap-6 text-center sm:items-start sm:text-left">
 
-          <div className="flex flex-row flex-wrap gap-4 p-4">
+          <div className="flex flex-row flex-wrap justify-center gap-4 p-4">
             {projects.map((project, index) => (
               <ProjectCard key={index} {...project} />
             ))}
