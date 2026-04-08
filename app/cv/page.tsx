@@ -46,7 +46,7 @@ export default function CV() {
           <h2 className="text-4xl font-bold mb-4 text-white">Hi, I'm Angus</h2>
           <p className="text-lg text-slate-400">
             Developer, photographer, and builder of interesting things. I enjoy
-            working on creative technical projects, mixing a Good Challenge with oppurtunities to design Beautiful Software
+            working on creative technical projects, mixing good challenges with opportunities to design beautiful software.
           </p>
         </section>
 
