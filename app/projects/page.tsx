@@ -13,8 +13,17 @@ interface Project {
 
 const projects: Project[] = [
   {
+    title: 'Anagramble',
+    description: 'A fun daily puzzle game where the player makes anagrams from a given set of letters.',
+    technologies: ['Next.js', 'Typescript', 'Linux Web Hosting'],
+    imageSrc: '/anagramble.jpg',
+    status: 'Live',
+    archive: 'FALSE',
+    link: 'https://anagramble.angusbodle.nz/',
+  },
+  {
     title: 'Auto Tyres Website',
-    description: 'Branding Photography and Static Website Design. Business has changed hands since and original design is no longer in use.',
+    description: 'Branding photography and static website design. Business has changed hands since and original design is no longer in use.',
     technologies: ['HTML', 'PHP', 'CSS', 'Cloud Web Hosting', 'Photography'],
     imageSrc: '/autotyres.webp',
     status: 'Offline',
@@ -31,7 +40,7 @@ const projects: Project[] = [
     link: 'https://angusbodle.nz',
   },
   {
-    title: 'Photograpy Portfolio',
+    title: 'Photography Portfolio',
     description: 'Modern Website Design to showcase my Photos. Used Google Drive API for easy content management with my google cloud storage.',
     technologies: ['React', 'Typescript', 'Google Drive API', 'Linux Web Hosting'],
     imageSrc: '/photositesc.webp',
